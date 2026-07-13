@@ -1,6 +1,7 @@
 from copy import deepcopy
 from pathlib import Path
 import re
+import subprocess
 
 import pytest
 import yaml
@@ -173,9 +174,11 @@ def assert_snake_contract(workflow: dict, workflow_text: str) -> None:
     publish = named_step(generate, "Publish output branch")
     commands = command_lines(publish["run"])
     assert "git switch --orphan output" in commands
-    assert "git rm -rf . 2>/dev/null || true" in commands, (
-        "output cleanup must succeed when orphan checkout is already empty"
+    cleanup_commands = [line for line in commands if line.startswith("git rm ")]
+    assert cleanup_commands == ["git rm -rf --ignore-unmatch ."], (
+        "output cleanup must ignore an empty pathspec without masking git errors"
     )
+    assert "|| true" not in cleanup_commands[0]
     assert [line for line in commands if line.startswith("git add ")] == [
         "git add contribution-snake.svg contribution-snake-dark.svg"
     ]
@@ -206,6 +209,49 @@ def test_daily_stages_stable_assets_and_only_normally_pushes_main():
 
 def test_snake_generates_validates_and_only_force_pushes_output():
     assert_snake_contract(load("snake.yml"), text("snake.yml"))
+
+
+def test_snake_cleanup_succeeds_when_empty_and_surfaces_git_errors(tmp_path):
+    workflow = load("snake.yml")
+    publish = named_step(workflow["jobs"]["generate"], "Publish output branch")
+    cleanup = next(
+        line
+        for line in command_lines(publish["run"])
+        if line.startswith("git rm ")
+    )
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "test"], cwd=repo, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=repo,
+        check=True,
+    )
+    (repo / "tracked.txt").write_text("tracked", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "switch", "--orphan", "output"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    empty = subprocess.run(
+        cleanup, cwd=repo, shell=True, capture_output=True, text=True
+    )
+    assert empty.returncode == 0
+
+    (repo / ".git" / "index.lock").touch()
+    locked = subprocess.run(
+        cleanup, cwd=repo, shell=True, capture_output=True, text=True
+    )
+    assert locked.returncode != 0
 
 
 def test_only_publishing_jobs_have_contents_write():
