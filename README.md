@@ -63,4 +63,9 @@ A growing C++ log of algorithm practice, problem-solving patterns, and implement
   <br />
   <img src="https://komarev.com/ghpvc/?username=Izumi-iii&amp;style=flat-square&amp;color=39f6d2&amp;label=VISITOR" alt="Profile visitor counter" />
   <p><code>INSERT CURIOSITY TO CONTINUE</code></p>
+  <p>
+    <a href="https://github.com/Izumi-iii">GitHub</a>
+    ·
+    <a href="mailto:depressing113@foxmail.com">Email</a>
+  </p>
 </div>

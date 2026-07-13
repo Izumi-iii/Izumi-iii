@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
@@ -39,6 +40,24 @@ PROJECTS = (
         "A growing C++ log of algorithm practice, problem-solving patterns, and implementation notes.",
     ),
 )
+REQUIRED_LOCAL_IMAGES = {
+    "assets/brand/izumi-builder.svg": "IZUMI // BUILDER neon pixel logo",
+    "assets/hero/miku-idle.gif": "Pixel-art Hatsune Miku gently idling",
+    "assets/brand/current-quest.svg": (
+        "Current quests rotate through SwiftUI, computer vision, algorithms, "
+        "and building experiments"
+    ),
+    "assets/generated/profile-stats.svg": (
+        "Izumi's current GitHub activity statistics"
+    ),
+    "assets/generated/languages.svg": (
+        "Languages used across Izumi's public repositories"
+    ),
+    "assets/generated/projects.svg": (
+        "Live stars and update dates for Izumi's featured repositories"
+    ),
+    "assets/generated/last-sync.svg": "Last successful automated profile update",
+}
 
 MARKDOWN = MarkdownIt("commonmark", {"html": True})
 
@@ -61,6 +80,7 @@ class ReadmeHTMLParser(HTMLParser):
         self.links: list[str] = []
         self.paragraphs: list[str] = []
         self.pictures: list[list[tuple[str, dict[str, str | None]]]] = []
+        self.duplicate_attributes: list[tuple[str, str]] = []
         self._paragraph_parts: list[str] | None = None
         self._paragraph_depth = 0
         self._picture: list[tuple[str, dict[str, str | None]]] | None = None
@@ -68,6 +88,12 @@ class ReadmeHTMLParser(HTMLParser):
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
+        attribute_names = [name for name, _ in attrs]
+        self.duplicate_attributes.extend(
+            (tag, name)
+            for name, count in Counter(attribute_names).items()
+            if count > 1
+        )
         attributes = dict(attrs)
         if tag == "p":
             if self._paragraph_parts is None:
@@ -258,13 +284,13 @@ def _markdown_paragraphs(tokens: list[Token]) -> list[str]:
     ]
 
 
-def _markdown_links(tokens: list[Token]) -> set[str]:
-    return {
+def _markdown_links(tokens: list[Token]) -> list[str]:
+    return [
         href
         for token in tokens
         if token.type == "inline"
         for href in _inline_links(token.children or [])
-    }
+    ]
 
 
 def _markdown_images(tokens: list[Token]) -> list[tuple[str, str]]:
@@ -289,8 +315,49 @@ def _is_remote(reference: str) -> bool:
 
 
 def _validate_image_reference(reference: str, root: Path, errors: list[str]) -> None:
-    if not _is_remote(reference) and not (root / reference).is_file():
+    if _is_remote(reference):
+        return
+    resolved_root = root.resolve()
+    try:
+        resolved_reference = (resolved_root / reference).resolve()
+        resolved_reference.relative_to(resolved_root)
+    except (OSError, RuntimeError, ValueError):
+        errors.append(f"local image escapes repository root: {reference}")
+        return
+    if not resolved_reference.is_file():
         errors.append(f"missing local image: {reference}")
+
+
+def _validate_local_image_manifest(
+    html: ReadmeHTMLParser,
+    markdown_images: list[tuple[str, str]],
+    errors: list[str],
+) -> None:
+    rendered = [
+        (image.get("src") or "", (image.get("alt") or "").strip())
+        for image in html.images
+    ]
+    rendered.extend(markdown_images)
+    local = [(source, alt) for source, alt in rendered if not _is_remote(source)]
+    counts = Counter(local)
+    for source, alt in REQUIRED_LOCAL_IMAGES.items():
+        if counts[(source, alt)] != 1:
+            errors.append(
+                "local image manifest requires exactly one "
+                f"{source} with alt text: {alt}"
+            )
+    unexpected = sorted(
+        (source, alt)
+        for source, alt in local
+        if (source, alt) not in {
+            (required_source, required_alt)
+            for required_source, required_alt in REQUIRED_LOCAL_IMAGES.items()
+        }
+    )
+    for source, alt in unexpected:
+        errors.append(
+            f"unexpected local image in manifest: {source} (alt: {alt or '<empty>'})"
+        )
 
 
 def _srcset_references(srcset: str) -> list[str]:
@@ -329,6 +396,10 @@ def validate_readme(path: Path, root: Path) -> list[str]:
     tokens = MARKDOWN.parse(path.read_text(encoding="utf-8"))
     html = _feed_rendered_html(tokens)
     errors = _validate_project_fallbacks(tokens)
+    errors.extend(
+        f"duplicate HTML attribute on <{tag}>: {attribute}"
+        for tag, attribute in html.duplicate_attributes
+    )
 
     paragraphs = html.paragraphs + _markdown_paragraphs(tokens)
     if paragraphs.count(CHINESE_IDENTITY_LINE) != 1:
@@ -336,16 +407,17 @@ def validate_readme(path: Path, root: Path) -> list[str]:
     if paragraphs.count(POSITIONING_LINE) != 1:
         errors.append(f"missing rendered positioning line: {POSITIONING_LINE}")
 
-    link_targets = set(html.links) | _markdown_links(tokens)
-    if PROFILE_URL not in link_targets:
+    link_targets = html.links + _markdown_links(tokens)
+    if link_targets.count(PROFILE_URL) != 2:
         errors.append(f"missing GitHub profile link: {PROFILE_URL}")
-    if EMAIL_URL not in link_targets:
+    if link_targets.count(EMAIL_URL) != 2:
         errors.append(f"missing email link: {EMAIL_URL}")
 
     if not _has_stable_snake_picture(html):
         errors.append("missing exact stable contribution snake picture")
 
     markdown_images = _markdown_images(tokens)
+    _validate_local_image_manifest(html, markdown_images, errors)
     image_alts = [(image.get("alt") or "").strip() for image in html.images]
     image_alts.extend(alt for _, alt in markdown_images)
     if not any("IZUMI // BUILDER" in alt for alt in image_alts):

@@ -44,38 +44,63 @@ def pending_assets() -> dict[str, str]:
 
 
 def atomic_write_assets(output_dir: Path, assets: dict[str, str]) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
     for name, content in assets.items():
         if not content.lstrip().startswith("<svg") or len(content) < 100:
             raise ValueError(f"{name} is not a non-empty SVG")
 
-    temp_dir = Path(tempfile.mkdtemp(prefix="profile-assets-", dir=output_dir.parent))
+    transaction_dir = Path(
+        tempfile.mkdtemp(prefix="profile-assets-", dir=output_dir.parent)
+    )
+    staged_dir = transaction_dir / "staged"
+    snapshot_dir = transaction_dir / "snapshot"
+    preserve_snapshot = False
     try:
+        if output_dir.exists():
+            shutil.copytree(output_dir, staged_dir)
+        else:
+            staged_dir.mkdir()
         for name, content in assets.items():
-            (temp_dir / name).write_text(content, encoding="utf-8")
+            (staged_dir / name).write_text(content, encoding="utf-8")
 
-        backup_dir = temp_dir / "previous"
-        backup_dir.mkdir()
-        existing_assets = set()
-        for name in assets:
-            target = output_dir / name
-            if target.exists():
-                shutil.copy2(target, backup_dir / name)
-                existing_assets.add(name)
-
+        had_publication = output_dir.exists()
+        if had_publication:
+            os.replace(output_dir, snapshot_dir)
         try:
-            for name in assets:
-                os.replace(temp_dir / name, output_dir / name)
-        except Exception:
-            for name in assets:
-                target = output_dir / name
-                if name in existing_assets:
-                    os.replace(backup_dir / name, target)
-                else:
-                    target.unlink(missing_ok=True)
+            os.replace(staged_dir, output_dir)
+        except Exception as publication_error:
+            if had_publication:
+                try:
+                    os.replace(snapshot_dir, output_dir)
+                    publication_error.add_note(
+                        "Rollback restored the previous asset directory snapshot."
+                    )
+                except Exception as rollback_error:
+                    try:
+                        if output_dir.exists():
+                            shutil.rmtree(output_dir)
+                        shutil.copytree(snapshot_dir, output_dir)
+                    except Exception as fallback_error:
+                        preserve_snapshot = True
+                        publication_error.add_note(
+                            "Rollback failed; the recoverable directory snapshot is "
+                            f"preserved at {snapshot_dir}. First rollback error: "
+                            f"{rollback_error!r}; fallback error: {fallback_error!r}."
+                        )
+                    else:
+                        publication_error.add_note(
+                            "Rollback required the copy fallback after the atomic "
+                            f"restore failed: {rollback_error!r}."
+                        )
+            else:
+                publication_error.add_note(
+                    "Publication failed before any asset directory existed; no "
+                    "rollback snapshot was required."
+                )
             raise
     finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        if not preserve_snapshot:
+            shutil.rmtree(transaction_dir, ignore_errors=True)
 
 
 def generate_from_fixture(fixture: Path, output_dir: Path, moment: datetime) -> None:

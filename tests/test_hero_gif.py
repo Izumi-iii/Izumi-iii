@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 from PIL import Image, ImageSequence
@@ -76,3 +77,23 @@ def test_committed_hero_is_small_and_animated():
         frames = [frame.convert("RGBA") for frame in ImageSequence.Iterator(gif)]
         assert [frame.info["duration"] for frame in frames] == [500, 500, 500, 500]
         assert [frame.getpixel((0, 0))[3] for frame in frames] == [0, 0, 0, 0]
+
+
+def test_committed_hero_pixels_match_a_temporary_rebuild(tmp_path):
+    rebuilt = tmp_path / "miku-idle.gif"
+    build_gif(
+        Path("assets/hero/miku-idle-sheet.png"),
+        rebuilt,
+        frame_count=4,
+        display_size=256,
+        duration_ms=500,
+    )
+
+    def rgba_hashes(path):
+        with Image.open(path) as gif:
+            return [
+                hashlib.sha256(frame.convert("RGBA").tobytes()).hexdigest()
+                for frame in ImageSequence.Iterator(gif)
+            ]
+
+    assert rgba_hashes(rebuilt) == rgba_hashes(Path("assets/hero/miku-idle.gif"))

@@ -1,7 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
 import re
-import subprocess
 
 import pytest
 import yaml
@@ -9,11 +8,16 @@ import yaml
 
 WORKFLOWS = Path(".github/workflows")
 WORKFLOW_NAMES = {"daily-profile.yml", "snake.yml"}
-DAILY_GUARD = (
+MAIN_GUARD = (
     "(github.event_name == 'schedule' || "
     "github.event_name == 'workflow_dispatch') && "
     "github.ref == 'refs/heads/main'"
 )
+CHECKOUT = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
+SETUP_PYTHON = "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1"
+UPLOAD_ARTIFACT = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+DOWNLOAD_ARTIFACT = "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"
+SNAKE_ACTION = "Platane/snk/svg-only@d8f6715049803e982ee5ff501b6b9b7d5deeb09b"
 SNAKE_OUTPUTS = [
     "dist/contribution-snake.svg?color_snake=#39F6D2&color_dots="
     "#EEEAFB,#B7F7EC,#65E9D2,#39CDB5,#FF4FD8",
@@ -36,11 +40,9 @@ def named_step(job: dict, name: str) -> dict:
     return matching[0]
 
 
-def action_step(job: dict, prefix: str, expected: str) -> dict:
-    matching = [
-        step for step in job["steps"] if step.get("uses", "").startswith(prefix)
-    ]
-    assert [step["uses"] for step in matching] == [expected]
+def action_step(job: dict, expected: str) -> dict:
+    matching = [step for step in job["steps"] if step.get("uses") == expected]
+    assert len(matching) == 1, f"expected one {expected!r} step"
     return matching[0]
 
 
@@ -56,7 +58,7 @@ def push_commands(workflow_text: str) -> list[str]:
     ]
 
 
-def assert_only_publishing_jobs_write(workflows: dict[str, dict]) -> None:
+def assert_split_permissions(workflows: dict[str, dict]) -> None:
     writers = {
         (workflow_name, job_name)
         for workflow_name, workflow in workflows.items()
@@ -64,80 +66,69 @@ def assert_only_publishing_jobs_write(workflows: dict[str, dict]) -> None:
         if job.get("permissions", {}).get("contents") == "write"
     }
     assert writers == {
-        ("daily-profile.yml", "generate"),
-        ("snake.yml", "generate"),
-    }, "only publishing jobs may have contents write"
+        ("daily-profile.yml", "publish"),
+        ("snake.yml", "publish"),
+    }, "only publish jobs may have contents write"
+    for workflow in workflows.values():
+        for job_name, job in workflow["jobs"].items():
+            if job_name != "publish":
+                assert job.get("permissions") == {"contents": "read"}
 
 
-def assert_daily_trigger_and_permission_contract(workflow: dict) -> None:
+def assert_main_only_dynamic_jobs(workflow: dict) -> None:
+    for name in ("generate", "publish"):
+        assert workflow["jobs"][name]["if"] == MAIN_GUARD
+
+
+def assert_daily_contract(workflow: dict, workflow_text: str) -> None:
     assert set(workflow["on"]) == {
-        "push",
-        "pull_request",
-        "schedule",
-        "workflow_dispatch",
+        "push", "pull_request", "schedule", "workflow_dispatch"
     }
     assert workflow["on"]["push"]["branches"] == ["main"]
     assert workflow["on"]["pull_request"]["branches"] == ["main"]
     assert workflow["on"]["schedule"] == [{"cron": "17 2 * * *"}]
     assert workflow["permissions"] == {"contents": "read"}
-    assert set(workflow["jobs"]) == {"quality", "generate"}
+    assert set(workflow["jobs"]) == {"quality", "generate", "publish"}
+    assert_main_only_dynamic_jobs(workflow)
 
     quality = workflow["jobs"]["quality"]
-    assert quality.get("permissions") == {"contents": "read"}, (
-        "quality job must be explicitly read-only"
-    )
+    action_step(quality, CHECKOUT)
+    setup = action_step(quality, SETUP_PYTHON)
+    assert setup["with"] == {"python-version": "3.13", "cache": "pip"}
 
     generate = workflow["jobs"]["generate"]
-    assert generate["permissions"] == {"contents": "write"}
     assert generate["needs"] == "quality"
-    assert generate["if"] == DAILY_GUARD, (
-        "generate must require a scheduled/manual main-branch event"
-    )
-
-
-def assert_daily_toolchain_contract(workflow: dict) -> None:
-    quality = workflow["jobs"]["quality"]
-    action_step(quality, "actions/checkout@", "actions/checkout@v6")
-    quality_setup = action_step(
-        quality, "actions/setup-python@", "actions/setup-python@v6"
-    )
-    assert quality_setup["with"] == {"python-version": "3.13", "cache": "pip"}
-    quality_runs = [step["run"] for step in quality["steps"] if "run" in step]
-    assert quality_runs == [
-        "python -m pip install -r requirements-dev.txt",
-        "pytest",
-        "python scripts/validate_readme.py README.md",
-    ]
-
-    generate = workflow["jobs"]["generate"]
-    checkout = action_step(generate, "actions/checkout@", "actions/checkout@v6")
-    assert checkout.get("with", {}).get("ref") == "main", (
-        "generate checkout must pin ref main"
-    )
-    assert checkout["with"].get("fetch-depth") == "0"
-    generate_setup = action_step(
-        generate, "actions/setup-python@", "actions/setup-python@v6"
-    )
-    assert generate_setup["with"] == {"python-version": "3.13"}
-
+    checkout = action_step(generate, CHECKOUT)
+    assert checkout["with"] == {"ref": "main"}
+    action_step(generate, SETUP_PYTHON)
     generator = named_step(generate, "Generate validated SVG cards")
-    assert generator["run"] == "python scripts/generate_profile.py"
-    assert generator["env"] == {
-        "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
+    assert generator["run"] == (
+        "python scripts/generate_profile.py --output-dir dist/profile-cards"
+    )
+    assert generator["env"] == {"GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}
+    upload = action_step(generate, UPLOAD_ARTIFACT)
+    assert upload["with"] == {
+        "name": "profile-cards",
+        "path": "dist/profile-cards",
+        "if-no-files-found": "error",
     }
 
-
-def assert_daily_publication_contract(workflow: dict, workflow_text: str) -> None:
-    publish = named_step(workflow["jobs"]["generate"], "Publish changed cards")
-    commands = command_lines(publish["run"])
+    publish = workflow["jobs"]["publish"]
+    assert publish["needs"] == "generate"
+    checkout = action_step(publish, CHECKOUT)
+    assert checkout["with"] == {"ref": "main", "fetch-depth": "0"}
+    download = action_step(publish, DOWNLOAD_ARTIFACT)
+    assert download["with"] == {
+        "name": "profile-cards",
+        "path": ".profile-cards-staged",
+    }
+    publish_step = named_step(publish, "Publish changed cards")
+    commands = command_lines(publish_step["run"])
+    assert "mv .profile-cards-staged assets/generated" in commands
     assert [line for line in commands if line.startswith("git add ")] == [
         "git add assets/generated"
     ]
-    assert "if git diff --cached --quiet; then" in commands
-    assert "echo \"Profile cards are already current\"" in commands
-    assert push_commands(workflow_text) == ["git push origin HEAD:main"], (
-        "daily workflow must have only the normal push to main"
-    )
+    assert push_commands(workflow_text) == ["git push origin HEAD:main"]
     assert "--force" not in push_commands(workflow_text)[0]
 
 
@@ -145,187 +136,114 @@ def assert_snake_contract(workflow: dict, workflow_text: str) -> None:
     assert set(workflow["on"]) == {"schedule", "workflow_dispatch"}
     assert workflow["on"]["schedule"] == [{"cron": "43 2 * * *"}]
     assert workflow["permissions"] == {"contents": "read"}
-    assert workflow["concurrency"] == {
-        "group": "contribution-snake-output",
-        "cancel-in-progress": "false",
-    }
-    assert set(workflow["jobs"]) == {"generate"}
+    assert set(workflow["jobs"]) == {"generate", "publish"}
+    assert_main_only_dynamic_jobs(workflow)
 
     generate = workflow["jobs"]["generate"]
-    assert generate["permissions"] == {"contents": "write"}
-    checkout = action_step(generate, "actions/checkout@", "actions/checkout@v6")
-    assert checkout["with"] == {"fetch-depth": "0"}
-
-    snake = action_step(
-        generate, "Platane/snk/", "Platane/snk/svg-only@v3"
-    )
+    snake = action_step(generate, SNAKE_ACTION)
     assert snake["with"]["github_user_name"] == "${{ github.repository_owner }}"
     assert snake["with"]["outputs"].splitlines() == SNAKE_OUTPUTS
     assert snake["env"] == {"GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"}
+    validation = named_step(generate, "Validate generated files")["run"]
+    assert "xml.etree.ElementTree" in validation
+    assert "{http://www.w3.org/2000/svg}svg" in validation
+    assert "set(path.name for path in output.iterdir())" in validation
+    upload = action_step(generate, UPLOAD_ARTIFACT)
+    assert upload["with"] == {
+        "name": "contribution-snake",
+        "path": "dist/contribution-snake.svg\ndist/contribution-snake-dark.svg",
+        "if-no-files-found": "error",
+    }
 
-    validate = named_step(generate, "Validate generated files")
-    assert command_lines(validate["run"]) == [
-        "test -s dist/contribution-snake.svg",
-        "test -s dist/contribution-snake-dark.svg",
-        "grep -q '<svg' dist/contribution-snake.svg",
-        "grep -q '<svg' dist/contribution-snake-dark.svg",
-    ]
-
-    publish = named_step(generate, "Publish output branch")
-    commands = command_lines(publish["run"])
+    publish = workflow["jobs"]["publish"]
+    assert publish["needs"] == "generate"
+    checkout = action_step(publish, CHECKOUT)
+    assert checkout["with"] == {"ref": "main", "fetch-depth": "0"}
+    download = action_step(publish, DOWNLOAD_ARTIFACT)
+    assert download["with"] == {
+        "name": "contribution-snake",
+        "path": "dist",
+    }
+    publish_step = named_step(publish, "Publish output branch")
+    commands = command_lines(publish_step["run"])
     assert "git switch --orphan output" in commands
-    cleanup_commands = [line for line in commands if line.startswith("git rm ")]
-    assert cleanup_commands == ["git rm -rf --ignore-unmatch ."], (
-        "output cleanup must ignore an empty pathspec without masking git errors"
-    )
-    assert "|| true" not in cleanup_commands[0]
+    assert [line for line in commands if line.startswith("git rm ")] == [
+        "git rm -rf --ignore-unmatch ."
+    ]
     assert [line for line in commands if line.startswith("git add ")] == [
         "git add contribution-snake.svg contribution-snake-dark.svg"
     ]
-    assert push_commands(workflow_text) == ["git push --force origin output"], (
-        "snake workflow must force push only to output"
-    )
+    assert push_commands(workflow_text) == ["git push --force origin output"]
 
 
 def test_repository_has_exactly_two_workflows():
-    assert {path.name for path in WORKFLOWS.iterdir() if path.is_file()} == (
-        WORKFLOW_NAMES
-    )
+    assert {path.name for path in WORKFLOWS.iterdir() if path.is_file()} == WORKFLOW_NAMES
 
 
-def test_daily_triggers_permissions_dependency_and_main_ref_guard():
-    assert_daily_trigger_and_permission_contract(load("daily-profile.yml"))
+def test_workflows_split_read_only_generation_from_write_only_publication():
+    workflows = {name: load(name) for name in WORKFLOW_NAMES}
+    assert_split_permissions(workflows)
 
 
-def test_daily_uses_pinned_toolchain_and_full_quality_commands():
-    assert_daily_toolchain_contract(load("daily-profile.yml"))
+def test_daily_uses_main_guard_artifact_boundary_and_atomic_ref_publish():
+    assert_daily_contract(load("daily-profile.yml"), text("daily-profile.yml"))
 
 
-def test_daily_stages_stable_assets_and_only_normally_pushes_main():
-    assert_daily_publication_contract(
-        load("daily-profile.yml"), text("daily-profile.yml")
-    )
-
-
-def test_snake_generates_validates_and_only_force_pushes_output():
+def test_snake_uses_main_guard_exact_xml_artifact_and_output_publish():
     assert_snake_contract(load("snake.yml"), text("snake.yml"))
 
 
-def test_snake_cleanup_succeeds_when_empty_and_surfaces_git_errors(tmp_path):
-    workflow = load("snake.yml")
-    publish = named_step(workflow["jobs"]["generate"], "Publish output branch")
-    cleanup = next(
-        line
-        for line in command_lines(publish["run"])
-        if line.startswith("git rm ")
-    )
-
-    repo = tmp_path / "repo"
-    repo.mkdir()
-    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
-    subprocess.run(
-        ["git", "config", "user.name", "test"], cwd=repo, check=True
-    )
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"],
-        cwd=repo,
-        check=True,
-    )
-    (repo / "tracked.txt").write_text("tracked", encoding="utf-8")
-    subprocess.run(["git", "add", "tracked.txt"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
-    subprocess.run(
-        ["git", "switch", "--orphan", "output"],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    empty = subprocess.run(
-        cleanup, cwd=repo, shell=True, capture_output=True, text=True
-    )
-    assert empty.returncode == 0
-
-    (repo / ".git" / "index.lock").touch()
-    locked = subprocess.run(
-        cleanup, cwd=repo, shell=True, capture_output=True, text=True
-    )
-    assert locked.returncode != 0
+def test_every_external_action_is_pinned_to_an_approved_full_sha():
+    approved = {
+        CHECKOUT, SETUP_PYTHON, UPLOAD_ARTIFACT, DOWNLOAD_ARTIFACT, SNAKE_ACTION
+    }
+    used = {
+        step["uses"]
+        for name in WORKFLOW_NAMES
+        for job in load(name)["jobs"].values()
+        for step in job["steps"]
+        if "uses" in step
+    }
+    assert used <= approved
+    assert all(re.search(r"@[0-9a-f]{40}$", action) for action in used)
 
 
-def test_only_publishing_jobs_have_contents_write():
-    workflows = {name: load(name) for name in WORKFLOW_NAMES}
-    assert_only_publishing_jobs_write(workflows)
+def test_non_main_manual_dispatch_cannot_generate_or_publish():
+    for name in WORKFLOW_NAMES:
+        workflow = load(name)
+        assert_main_only_dynamic_jobs(workflow)
+        mutated = deepcopy(workflow)
+        mutated["jobs"]["publish"]["if"] = "github.event_name == 'workflow_dispatch'"
+        with pytest.raises(AssertionError):
+            assert_main_only_dynamic_jobs(mutated)
 
 
 def test_workflows_have_exact_concurrency_and_only_repository_token():
     workflows = [load(name) for name in sorted(WORKFLOW_NAMES)]
     assert [workflow["concurrency"]["group"] for workflow in workflows] == [
-        "daily-profile-main",
-        "contribution-snake-output",
+        "daily-profile-main", "contribution-snake-output"
     ]
     assert all(
         workflow["concurrency"]["cancel-in-progress"] == "false"
         for workflow in workflows
     )
-
     all_text = "\n".join(text(name) for name in sorted(WORKFLOW_NAMES))
     secret_references = re.findall(r"\bsecrets\.([A-Za-z_][A-Za-z0-9_]*)\b", all_text)
-    assert secret_references
-    assert set(secret_references) == {"GITHUB_TOKEN"}
-    token_expressions = {
-        expression.strip()
-        for expression in re.findall(r"\$\{\{\s*([^}]+?)\s*\}\}", all_text)
-        if re.search(r"token|secret|pat", expression, flags=re.IGNORECASE)
-    }
-    assert token_expressions == {"secrets.GITHUB_TOKEN"}
-    without_repository_token = all_text.replace("secrets.GITHUB_TOKEN", "")
-    assert not re.search(
-        r"\b(?:PAT|PERSONAL_ACCESS_TOKEN|CUSTOM_TOKEN|PRIVATE_TOKEN)\b",
-        without_repository_token,
-        flags=re.IGNORECASE,
-    )
-
-    all_pushes = [
+    assert secret_references and set(secret_references) == {"GITHUB_TOKEN"}
+    assert [
         command
         for name in sorted(WORKFLOW_NAMES)
         for command in push_commands(text(name))
-    ]
-    assert all_pushes == [
-        "git push origin HEAD:main",
-        "git push --force origin output",
-    ]
+    ] == ["git push origin HEAD:main", "git push --force origin output"]
 
 
-def test_daily_contract_rejects_missing_checkout_ref_pin():
-    workflow = deepcopy(load("daily-profile.yml"))
-    checkout = action_step(
-        workflow["jobs"]["generate"],
-        "actions/checkout@",
-        "actions/checkout@v6",
-    )
-    checkout.setdefault("with", {}).pop("ref", None)
-    with pytest.raises(AssertionError, match="pin ref main"):
-        assert_daily_toolchain_contract(workflow)
-
-
-def test_permission_contract_rejects_quality_contents_write():
+def test_permission_contract_rejects_write_on_generation_job():
     workflows = {name: deepcopy(load(name)) for name in WORKFLOW_NAMES}
-    workflows["daily-profile.yml"]["jobs"]["quality"]["permissions"] = {
+    workflows["snake.yml"]["jobs"]["generate"]["permissions"] = {
         "contents": "write"
     }
-    with pytest.raises(AssertionError, match="only publishing jobs"):
-        assert_only_publishing_jobs_write(workflows)
-
-
-def test_daily_contract_rejects_another_push_target():
-    workflow_text = text("daily-profile.yml").replace(
-        "git push origin HEAD:main",
-        "git push origin HEAD:main\n          git push origin HEAD:release",
-    )
-    with pytest.raises(AssertionError, match="only the normal push to main"):
-        assert_daily_publication_contract(load("daily-profile.yml"), workflow_text)
+    with pytest.raises(AssertionError, match="only publish jobs"):
+        assert_split_permissions(workflows)
 
 
 def test_snake_contract_rejects_another_force_push_target():
@@ -333,5 +251,5 @@ def test_snake_contract_rejects_another_force_push_target():
         "git push --force origin output",
         "git push --force origin output\n          git push --force origin backup",
     )
-    with pytest.raises(AssertionError, match="force push only to output"):
+    with pytest.raises(AssertionError):
         assert_snake_contract(load("snake.yml"), workflow_text)

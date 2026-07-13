@@ -79,6 +79,100 @@ def test_real_readme_has_required_fallback_content_and_assets():
     assert validate_readme(Path("README.md"), Path(".")) == []
 
 
+def test_real_readme_has_exact_local_visual_manifest_and_footer_contacts():
+    text = readme_text()
+    expected_paths = {
+        "assets/brand/izumi-builder.svg",
+        "assets/brand/current-quest.svg",
+        "assets/hero/miku-idle.gif",
+        "assets/generated/profile-stats.svg",
+        "assets/generated/languages.svg",
+        "assets/generated/projects.svg",
+        "assets/generated/last-sync.svg",
+    }
+    assert {
+        match.group(1)
+        for match in re.finditer(r'<img\s+[^>]*src="([^"]+)"', text)
+        if match.group(1).startswith("assets/")
+    } == expected_paths
+    assert all(text.count(f'src="{path}"') == 1 for path in expected_paths)
+    assert text.count('href="https://github.com/Izumi-iii"') == 2
+    assert text.count('href="mailto:depressing113@foxmail.com"') == 2
+
+
+@pytest.mark.parametrize(
+    ("original", "duplicate"),
+    (
+        (
+            '<a href="https://github.com/Izumi-iii">GitHub</a>',
+            '<a href="https://example.com" href="https://github.com/Izumi-iii">GitHub</a>',
+        ),
+        (
+            'src="assets/brand/izumi-builder.svg"',
+            'src="assets/missing.svg" src="assets/brand/izumi-builder.svg"',
+        ),
+        (
+            'alt="IZUMI // BUILDER neon pixel logo"',
+            'alt="wrong" alt="IZUMI // BUILDER neon pixel logo"',
+        ),
+        (
+            'media="(prefers-color-scheme: dark)"',
+            'media="print" media="(prefers-color-scheme: dark)"',
+        ),
+        (
+            'srcset="https://raw.githubusercontent.com/Izumi-iii/Izumi-iii/output/contribution-snake-dark.svg"',
+            'srcset="https://example.com/fake.svg" srcset="https://raw.githubusercontent.com/Izumi-iii/Izumi-iii/output/contribution-snake-dark.svg"',
+        ),
+        (
+            'width="760"',
+            'width="1" width="760"',
+        ),
+    ),
+)
+def test_validator_rejects_duplicate_html_attributes(
+    tmp_path, original, duplicate
+):
+    errors = validate_text(tmp_path, readme_text().replace(original, duplicate, 1))
+
+    assert any("duplicate HTML attribute" in error for error in errors)
+
+
+def test_validator_rejects_parent_traversal_image_even_when_target_exists(tmp_path):
+    root = tmp_path / "profile"
+    root.mkdir()
+    outside = tmp_path / "outside.svg"
+    outside.write_text("<svg xmlns='http://www.w3.org/2000/svg'/>", encoding="utf-8")
+    readme = root / "README.md"
+    readme.write_text(
+        readme_text().replace(
+            "assets/brand/izumi-builder.svg", "../outside.svg", 1
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_readme(readme, root)
+
+    assert "local image escapes repository root: ../outside.svg" in errors
+
+
+def test_validator_rejects_symlink_image_that_resolves_outside_root(tmp_path):
+    root = tmp_path / "profile"
+    asset = root / "assets" / "brand" / "izumi-builder.svg"
+    asset.parent.mkdir(parents=True)
+    outside = tmp_path / "outside.svg"
+    outside.write_text("<svg xmlns='http://www.w3.org/2000/svg'/>", encoding="utf-8")
+    asset.symlink_to(outside)
+    readme = root / "README.md"
+    readme.write_text(readme_text(), encoding="utf-8")
+
+    errors = validate_readme(readme, root)
+
+    assert (
+        "local image escapes repository root: assets/brand/izumi-builder.svg"
+        in errors
+    )
+
+
 def test_validator_reports_missing_project_link(tmp_path):
     readme = tmp_path / "README.md"
     readme.write_text("IZUMI // BUILDER")
@@ -466,10 +560,15 @@ def test_validator_checks_inline_markdown_image_paths(tmp_path):
 
 
 def test_validator_validates_shortcut_reference_markdown_image(tmp_path):
+    alt = "Izumi's current GitHub activity statistics"
     text = (
-        readme_text()
-        + "\n![Generated Preview]\n\n"
-        + "[Generated Preview]: assets/generated/profile-stats.svg\n"
+        readme_text().replace(
+            '  <img src="assets/generated/profile-stats.svg" width="680" '
+            f'alt="{alt}" />\n',
+            "",
+        )
+        + f"\n![{alt}]\n\n"
+        + f"[{alt}]: assets/generated/profile-stats.svg\n"
     )
 
     errors = validate_text(tmp_path, text)
@@ -480,14 +579,21 @@ def test_validator_validates_shortcut_reference_markdown_image(tmp_path):
 @pytest.mark.parametrize(
     "reference_image",
     (
-        "![Generated Preview][]\n\n[Generated Preview]: assets/generated/profile-stats.svg",
-        "![Generated Preview][preview]\n\n[preview]: assets/generated/profile-stats.svg",
+        "![Izumi's current GitHub activity statistics][]\n\n"
+        "[Izumi's current GitHub activity statistics]: assets/generated/profile-stats.svg",
+        "![Izumi's current GitHub activity statistics][preview]\n\n"
+        "[preview]: assets/generated/profile-stats.svg",
     ),
 )
 def test_validator_validates_collapsed_and_full_reference_markdown_images(
     tmp_path, reference_image
 ):
-    errors = validate_text(tmp_path, f"{readme_text()}\n{reference_image}\n")
+    text = readme_text().replace(
+        '  <img src="assets/generated/profile-stats.svg" width="680" '
+        'alt="Izumi\'s current GitHub activity statistics" />\n',
+        "",
+    )
+    errors = validate_text(tmp_path, f"{text}\n{reference_image}\n")
 
     assert errors == []
 
