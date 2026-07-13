@@ -1,0 +1,50 @@
+name: Refresh contribution run
+
+on:
+  schedule:
+    - cron: "43 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contribution-snake-output
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Generate light and dark neon snakes
+        uses: Platane/snk/svg-only@v3
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: |
+            dist/contribution-snake.svg?color_snake=#39F6D2&color_dots=#EEEAFB,#B7F7EC,#65E9D2,#39CDB5,#FF4FD8
+            dist/contribution-snake-dark.svg?palette=github-dark&color_snake=#FF4FD8&color_dots=#0D0A20,#173A46,#1A766F,#39F6D2,#4FFFE1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate generated files
+        run: |
+          test -s dist/contribution-snake.svg
+          test -s dist/contribution-snake-dark.svg
+          grep -q '<svg' dist/contribution-snake.svg
+          grep -q '<svg' dist/contribution-snake-dark.svg
+      - name: Publish output branch
+        run: |
+          mkdir -p /tmp/snake-output
+          cp dist/*.svg /tmp/snake-output/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan output
+          git rm -rf .
+          cp /tmp/snake-output/*.svg .
+          git add contribution-snake.svg contribution-snake-dark.svg
+          git commit -m "chore: refresh contribution run"
+          git push --force origin output

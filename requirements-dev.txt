@@ -1,0 +1,4 @@
+Pillow>=11.2,<13
+PyYAML>=6.0,<7
+markdown-it-py>=4.0,<5
+pytest>=8.4,<10

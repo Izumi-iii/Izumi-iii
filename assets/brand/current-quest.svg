@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="86" viewBox="0 0 760 86" role="img" aria-label="Current quest: SwiftUI, computer vision, algorithms, building experiments">
+  <style>
+    .line{opacity:0;animation:quest 8s steps(1,end) infinite}.q2{animation-delay:2s}.q3{animation-delay:4s}.q4{animation-delay:6s}@keyframes quest{0%,24%{opacity:1}25%,100%{opacity:0}}
+  </style>
+  <rect x="3" y="3" width="748" height="78" rx="5" fill="#0D0A20" stroke="#FF4FD8" stroke-width="3"/>
+  <text x="22" y="28" fill="#39F6D2" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">CURRENT QUEST</text>
+  <g fill="#E9E4FF" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="17">
+    <text class="line" x="22" y="59">&gt; Exploring SwiftUI and macOS apps_</text>
+    <text class="line q2" x="22" y="59">&gt; Building computer-vision experiments_</text>
+    <text class="line q3" x="22" y="59">&gt; Training with algorithms and C++_</text>
+    <text class="line q4" x="22" y="59">&gt; Turning curiosity into running things_</text>
+  </g>
+</svg>

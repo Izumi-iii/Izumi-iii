@@ -1,0 +1,18 @@
+{
+  "data": {
+    "user": {
+      "contributionsCollection": {
+        "totalCommitContributions": 42,
+        "totalPullRequestContributions": 7,
+        "contributionCalendar": {"totalContributions": 81}
+      },
+      "repositories": {
+        "nodes": [
+          {"name":"magicState","url":"https://github.com/Izumi-iii/magicState","stargazerCount":5,"updatedAt":"2026-07-12T02:00:00Z","languages":{"edges":[{"size":700,"node":{"name":"Swift"}},{"size":300,"node":{"name":"Python"}}]}},
+          {"name":"downing_detect","url":"https://github.com/Izumi-iii/downing_detect","stargazerCount":3,"updatedAt":"2026-06-20T02:00:00Z","languages":{"edges":[{"size":900,"node":{"name":"Python"}}]}},
+          {"name":"Algorithm","url":"https://github.com/Izumi-iii/Algorithm","stargazerCount":2,"updatedAt":"2026-05-10T02:00:00Z","languages":{"edges":[{"size":800,"node":{"name":"C++"}}]}}
+        ]
+      }
+    }
+  }
+}
