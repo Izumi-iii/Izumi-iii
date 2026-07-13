@@ -173,7 +173,9 @@ def assert_snake_contract(workflow: dict, workflow_text: str) -> None:
     publish = named_step(generate, "Publish output branch")
     commands = command_lines(publish["run"])
     assert "git switch --orphan output" in commands
-    assert "git rm -rf ." in commands
+    assert "git rm -rf . 2>/dev/null || true" in commands, (
+        "output cleanup must succeed when orphan checkout is already empty"
+    )
     assert [line for line in commands if line.startswith("git add ")] == [
         "git add contribution-snake.svg contribution-snake-dark.svg"
     ]

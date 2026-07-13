@@ -43,7 +43,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --orphan output
-          git rm -rf .
+          git rm -rf . 2>/dev/null || true
           cp /tmp/snake-output/*.svg .
           git add contribution-snake.svg contribution-snake-dark.svg
           git commit -m "chore: refresh contribution run"
