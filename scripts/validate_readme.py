@@ -22,7 +22,7 @@ SNAKE_LIGHT_URL = (
     "https://raw.githubusercontent.com/Izumi-iii/Izumi-iii/"
     "output/contribution-snake.svg"
 )
-FEATURED_SECTION = "03 // FEATURED BUILDS"
+FEATURED_SECTION = "04 // FEATURED BUILDS"
 PROJECTS = (
     (
         "magicState",

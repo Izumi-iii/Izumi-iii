@@ -42,7 +42,7 @@ def project_block(name: str, url: str, description: str) -> str:
 
 def project_fallback_markdown() -> str:
     blocks = "\n\n".join(project_block(*project) for project in PROJECTS)
-    return f"## <code>03 // FEATURED BUILDS</code>\n\n{blocks}"
+    return f"## <code>04 // FEATURED BUILDS</code>\n\n{blocks}"
 
 
 def required_html() -> str:
@@ -259,13 +259,13 @@ def test_validator_rejects_project_fallback_hidden_in_comment_and_image(tmp_path
 
 def test_validator_does_not_use_code_inline_as_featured_section_label(tmp_path):
     text = readme_text().replace(
-        "## <code>03 // FEATURED BUILDS</code>",
-        "## `03 // FEATURED BUILDS`",
+        "## <code>04 // FEATURED BUILDS</code>",
+        "## `04 // FEATURED BUILDS`",
     )
 
     errors = validate_text(tmp_path, text)
 
-    assert "missing or duplicate featured builds section: 03 // FEATURED BUILDS" in errors
+    assert "missing or duplicate featured builds section: 04 // FEATURED BUILDS" in errors
 
 
 def test_validator_rejects_featured_projects_out_of_order(tmp_path):

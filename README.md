@@ -8,11 +8,19 @@
   <p>你好，我在把好奇心做成可以运行的东西。</p>
 
   <p>
+    <img alt="Focus: AI" src="https://img.shields.io/badge/Focus-AI-39f6d2?style=flat-square&labelColor=0d0a20" />
+    <img alt="Focus: Algorithms" src="https://img.shields.io/badge/Focus-Algorithms-ff4fd8?style=flat-square&labelColor=0d0a20" />
+    <img alt="Focus: macOS" src="https://img.shields.io/badge/Focus-macOS-e9e4ff?style=flat-square&labelColor=0d0a20" />
+  </p>
+
+  <p>
     <a href="https://github.com/Izumi-iii">GitHub</a>
     ·
     <a href="mailto:depressing113@foxmail.com">Email</a>
   </p>
 </div>
+
+---
 
 ## `01 // CURRENT QUEST`
 
@@ -20,7 +28,23 @@
   <img src="assets/brand/current-quest.svg" width="760" alt="Current quests rotate through SwiftUI, computer vision, algorithms, and building experiments" />
 </div>
 
-## `02 // PLAYER STATS`
+```txt
+> Building small, useful apps from raw ideas.
+> Practicing algorithms as a long-term training loop.
+> Exploring computer vision and AI product workflows.
+> Learning macOS development by shipping real interfaces.
+```
+
+## `02 // LOADOUT`
+
+| Area | Current Stack | What I Use It For |
+| --- | --- | --- |
+| `AI / Vision` | Python, YOLO, OpenCV | Detection experiments and model-driven prototypes |
+| `Algorithms` | C++, data structures, problem patterns | Competitive-programming practice and implementation notes |
+| `macOS Apps` | Swift, SwiftUI/AppKit | Desktop tools with clean workflows |
+| `Product Building` | Git, GitHub Actions, README automation | Turning experiments into maintainable projects |
+
+## `03 // PLAYER STATS`
 
 <div align="center">
   <img src="assets/generated/profile-stats.svg" width="680" alt="Izumi's current GitHub activity statistics" />
@@ -28,25 +52,31 @@
   <img src="assets/generated/languages.svg" width="680" alt="Languages used across Izumi's public repositories" />
 </div>
 
-## <code>03 // FEATURED BUILDS</code>
+## <code>04 // FEATURED BUILDS</code>
 
 ### [<code>magicState</code>](https://github.com/Izumi-iii/magicState)
 
 An application-development experiment focused on turning ideas into an interactive product.
 
+`app experiment` · `interactive product` · `idea-to-demo`
+
 ### [<code>downing_detect</code>](https://github.com/Izumi-iii/downing_detect)
 
 A Python computer-vision project using YOLO to detect potential drowning risk in video streams.
+
+`python` · `computer vision` · `YOLO`
 
 ### [<code>Algorithm</code>](https://github.com/Izumi-iii/Algorithm)
 
 A growing C++ log of algorithm practice, problem-solving patterns, and implementation notes.
 
+`C++` · `problem solving` · `training log`
+
 <div align="center">
   <img src="assets/generated/projects.svg" width="680" alt="Live stars and update dates for Izumi's featured repositories" />
 </div>
 
-## `04 // CONTRIBUTION RUN`
+## `05 // CONTRIBUTION RUN`
 
 <div align="center">
   <picture>

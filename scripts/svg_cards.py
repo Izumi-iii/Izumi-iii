@@ -12,14 +12,18 @@ BRIGHT = "#4FFFE1"
 MAGENTA = "#FF4FD8"
 TEXT = "#E9E4FF"
 MUTED = "#A89BCF"
+PANEL = "#151033"
+TRACK = "#26204D"
 FONT = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
 
 
 def _shell(title: str, body: str, width: int, height: int) -> str:
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">
 <rect x="2" y="2" width="{width - 8}" height="{height - 8}" rx="6" fill="{BG}" stroke="{BRIGHT}" stroke-width="3"/>
-<path d="M18 16h38M18 22h20" stroke="{MAGENTA}" stroke-width="3"/>
-<text x="24" y="46" fill="{TEAL}" font-family="{FONT}" font-size="16" font-weight="700">{escape(title)}</text>
+<rect x="14" y="14" width="{width - 32}" height="{height - 32}" rx="4" fill="{PANEL}" opacity="0.72"/>
+<path d="M18 18h46M18 25h25M{width - 104} {height - 30}h72M{width - 66} {height - 39}h34" stroke="{MAGENTA}" stroke-width="3"/>
+<text x="24" y="48" fill="{TEAL}" font-family="{FONT}" font-size="16" font-weight="700">{escape(title)}</text>
+<path d="M24 58h{width - 56}" stroke="{TRACK}" stroke-width="1"/>
 {body}
 </svg>'''
 
@@ -35,10 +39,10 @@ def render_profile_stats(profile: ProfileData) -> str:
         ("CONTRIBUTIONS / YEAR", profile.contributions),
         ("STARS EARNED", profile.total_stars),
     )
-    body = _text(24, 72, f"PLAYER // {profile.login}", 12, MUTED)
+    body = _text(24, 78, f"PLAYER // {profile.login}", 12, MUTED)
     for index, (label, value) in enumerate(metrics):
         x = 24 + (index % 2) * 320
-        y = 112 + (index // 2) * 48
+        y = 116 + (index // 2) * 46
         body += _text(x, y, value, 24, MAGENTA, 700)
         body += _text(x + 72, y, label, 12, TEXT)
     return _shell("PLAYER STATS", body, 680, 180)
@@ -52,8 +56,8 @@ def render_languages(profile: ProfileData) -> str:
         ratio = size / total
         width = max(8, round(470 * ratio))
         body += _text(24, y, name, 13)
-        body += f'<rect x="150" y="{y - 13}" width="470" height="12" fill="#211B45"/>'
-        body += f'<rect x="150" y="{y - 13}" width="{width}" height="12" fill="{TEAL}"/>'
+        body += f'<rect x="150" y="{y - 13}" width="470" height="12" rx="2" fill="{TRACK}"/>'
+        body += f'<rect x="150" y="{y - 13}" width="{width}" height="12" rx="2" fill="{TEAL}"/>'
         body += _text(630, y, f"{ratio:.0%}", 11, MUTED)
         y += 26
     return _shell("SKILL LOADOUT", body, 680, 220)
@@ -63,6 +67,7 @@ def render_projects(profile: ProfileData) -> str:
     body = ""
     y = 78
     for index, project in enumerate(profile.projects, start=1):
+        body += f'<rect x="22" y="{y - 21}" width="622" height="28" rx="3" fill="{TRACK}" opacity="0.42"/>'
         body += _text(24, y, f"0{index}", 14, MAGENTA, 700)
         body += _text(64, y, project.name, 15, TEAL, 700)
         body += _text(350, y, f"★ {project.stars}", 12, TEXT)
@@ -74,7 +79,8 @@ def render_projects(profile: ProfileData) -> str:
 def render_last_sync(moment: datetime) -> str:
     label = moment.strftime("%Y-%m-%d %H:%M UTC")
     body = _text(24, 75, label, 15, TEXT, 700)
-    body += _text(430, 75, "STATUS: ONLINE", 13, TEAL, 700)
+    body += f'<rect x="420" y="56" width="168" height="25" rx="3" fill="{TRACK}"/>'
+    body += _text(436, 74, "STATUS: ONLINE", 13, TEAL, 700)
     return _shell("LAST PROFILE SYNC", body, 680, 100)
 
 
