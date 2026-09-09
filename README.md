@@ -8,15 +8,11 @@
   <p>你好，我在把好奇心做成可以运行的东西。</p>
 
   <p>
-    <img alt="Focus: AI" src="https://img.shields.io/badge/Focus-AI-39f6d2?style=flat-square&labelColor=0d0a20" />
-    <img alt="Focus: Algorithms" src="https://img.shields.io/badge/Focus-Algorithms-ff4fd8?style=flat-square&labelColor=0d0a20" />
-    <img alt="Focus: macOS" src="https://img.shields.io/badge/Focus-macOS-e9e4ff?style=flat-square&labelColor=0d0a20" />
-  </p>
-
-  <p>
-    <a href="https://github.com/Izumi-iii">GitHub</a>
+    <a href="https://github.com/Izumi-iii"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-0D0A20?style=flat-square&logo=github&logoColor=39F6D2&labelColor=0D0A20&color=0D0A20" /></a>
     ·
-    <a href="mailto:depressing113@foxmail.com">Email</a>
+    <a href="https://www.izumiiii.asia/"><img alt="Blog" src="https://img.shields.io/badge/Blog-0D0A20?style=flat-square&logo=hexo&logoColor=FF4FD8&labelColor=0D0A20&color=0D0A20" /></a>
+    ·
+    <a href="mailto:depressing113@foxmail.com"><img alt="Email" src="https://img.shields.io/badge/Email-0D0A20?style=flat-square&logo=maildotru&logoColor=E9E4FF&labelColor=0D0A20&color=0D0A20" /></a>
   </p>
 </div>
 
@@ -94,8 +90,10 @@ A growing C++ log of algorithm practice, problem-solving patterns, and implement
   <img src="https://komarev.com/ghpvc/?username=Izumi-iii&amp;style=flat-square&amp;color=39f6d2&amp;label=VISITOR" alt="Profile visitor counter" />
   <p><code>INSERT CURIOSITY TO CONTINUE</code></p>
   <p>
-    <a href="https://github.com/Izumi-iii">GitHub</a>
+    <a href="https://github.com/Izumi-iii"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-0D0A20?style=flat-square&logo=github&logoColor=39F6D2&labelColor=0D0A20&color=0D0A20" /></a>
     ·
-    <a href="mailto:depressing113@foxmail.com">Email</a>
+    <a href="https://www.izumiiii.asia/"><img alt="Blog" src="https://img.shields.io/badge/Blog-0D0A20?style=flat-square&logo=hexo&logoColor=FF4FD8&labelColor=0D0A20&color=0D0A20" /></a>
+    ·
+    <a href="mailto:depressing113@foxmail.com"><img alt="Email" src="https://img.shields.io/badge/Email-0D0A20?style=flat-square&logo=maildotru&logoColor=E9E4FF&labelColor=0D0A20&color=0D0A20" /></a>
   </p>
 </div>

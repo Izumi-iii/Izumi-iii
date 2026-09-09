@@ -14,6 +14,7 @@ POSITIONING_LINE = "Student developer exploring AI, algorithms & macOS apps."
 CHINESE_IDENTITY_LINE = "你好，我在把好奇心做成可以运行的东西。"
 PROFILE_URL = "https://github.com/Izumi-iii"
 EMAIL_URL = "mailto:depressing113@foxmail.com"
+BLOG_URL = "https://www.izumiiii.asia/"
 SNAKE_DARK_URL = (
     "https://raw.githubusercontent.com/Izumi-iii/Izumi-iii/"
     "output/contribution-snake-dark.svg"
@@ -412,6 +413,8 @@ def validate_readme(path: Path, root: Path) -> list[str]:
         errors.append(f"missing GitHub profile link: {PROFILE_URL}")
     if link_targets.count(EMAIL_URL) != 2:
         errors.append(f"missing email link: {EMAIL_URL}")
+    if link_targets.count(BLOG_URL) != 2:
+        errors.append(f"missing blog link: {BLOG_URL}")
 
     if not _has_stable_snake_picture(html):
         errors.append("missing exact stable contribution snake picture")

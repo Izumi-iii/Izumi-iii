@@ -50,6 +50,7 @@ def required_html() -> str:
 <p><strong>Student developer exploring AI, algorithms &amp; macOS apps.</strong></p>
 <p>你好，我在把好奇心做成可以运行的东西。</p>
 <a href="https://github.com/Izumi-iii">GitHub</a>
+<a href="https://www.izumiiii.asia/">Blog</a>
 <a href="mailto:depressing113@foxmail.com">Email</a>
 <img src="https://example.com/logo.svg" alt="IZUMI // BUILDER neon pixel logo" />
 <picture>
@@ -65,6 +66,7 @@ def required_content_errors() -> set[str]:
         "missing rendered positioning line: Student developer exploring AI, algorithms & macOS apps.",
         "missing GitHub profile link: https://github.com/Izumi-iii",
         "missing email link: mailto:depressing113@foxmail.com",
+        "missing blog link: https://www.izumiiii.asia/",
         "missing exact stable contribution snake picture",
         "missing accessible identity title fallback: IZUMI // BUILDER",
     }
@@ -97,6 +99,7 @@ def test_real_readme_has_exact_local_visual_manifest_and_footer_contacts():
     } == expected_paths
     assert all(text.count(f'src="{path}"') == 1 for path in expected_paths)
     assert text.count('href="https://github.com/Izumi-iii"') == 2
+    assert text.count('href="https://www.izumiiii.asia/"') == 2
     assert text.count('href="mailto:depressing113@foxmail.com"') == 2
 
 
@@ -104,8 +107,8 @@ def test_real_readme_has_exact_local_visual_manifest_and_footer_contacts():
     ("original", "duplicate"),
     (
         (
-            '<a href="https://github.com/Izumi-iii">GitHub</a>',
-            '<a href="https://example.com" href="https://github.com/Izumi-iii">GitHub</a>',
+            '<a href="https://github.com/Izumi-iii">',
+            '<a href="https://example.com" href="https://github.com/Izumi-iii">',
         ),
         (
             'src="assets/brand/izumi-builder.svg"',
@@ -314,8 +317,8 @@ def test_validator_rejects_code_indented_project_fallback_parts(
 
 def test_validator_requires_actual_github_profile_link(tmp_path):
     text = readme_text().replace(
-        '<a href="https://github.com/Izumi-iii">GitHub</a>',
-        '<span data-url="https://github.com/Izumi-iii">GitHub</span>',
+        '<a href="https://github.com/Izumi-iii">',
+        '<span data-url="https://github.com/Izumi-iii">',
     )
 
     errors = validate_text(tmp_path, text)
@@ -323,10 +326,21 @@ def test_validator_requires_actual_github_profile_link(tmp_path):
     assert "missing GitHub profile link: https://github.com/Izumi-iii" in errors
 
 
+def test_validator_requires_actual_blog_link(tmp_path):
+    text = readme_text().replace(
+        '<a href="https://www.izumiiii.asia/">',
+        '<span data-url="https://www.izumiiii.asia/">',
+    )
+
+    errors = validate_text(tmp_path, text)
+
+    assert "missing blog link: https://www.izumiiii.asia/" in errors
+
+
 def test_validator_requires_actual_email_link(tmp_path):
     text = readme_text().replace(
-        '<a href="mailto:depressing113@foxmail.com">Email</a>',
-        '<span data-contact="mailto:depressing113@foxmail.com">Email</span>',
+        '<a href="mailto:depressing113@foxmail.com">',
+        '<span data-contact="mailto:depressing113@foxmail.com">',
     )
 
     errors = validate_text(tmp_path, text)
