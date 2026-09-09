@@ -48,6 +48,16 @@ REQUIRED_LOCAL_IMAGES = {
         "Current quests rotate through SwiftUI, computer vision, algorithms, "
         "and building experiments"
     ),
+    "assets/brand/quest-log.svg": (
+        "Quest log for Izumi's current app, algorithm, computer vision, and macOS work"
+    ),
+    "assets/brand/loadout-panel.svg": (
+        "Neon pixel loadout panel listing Izumi's AI, algorithms, macOS, "
+        "and product-building stack"
+    ),
+    "assets/brand/featured-builds.svg": (
+        "Neon pixel featured build cards for magicState, downing_detect, and Algorithm"
+    ),
     "assets/generated/profile-stats.svg": (
         "Izumi's current GitHub activity statistics"
     ),

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="275" viewBox="0 0 760 275" role="img" aria-label="Neon pixel featured build cards for magicState, downing_detect, and Algorithm">
+  <rect x="3" y="3" width="748" height="264" rx="6" fill="#0D0A20" stroke="#FF4FD8" stroke-width="3"/>
+  <rect x="17" y="17" width="720" height="230" rx="4" fill="#151033" opacity="0.72"/>
+  <path d="M25 29h54M25 37h28M655 241h64M687 232h32" stroke="#39F6D2" stroke-width="4"/>
+  <text x="34" y="61" fill="#39F6D2" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="800">FEATURED BUILDS</text>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+    <rect x="34" y="82" width="692" height="48" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="54" y="112" fill="#FF4FD8" font-size="17" font-weight="900">01</text>
+    <text x="96" y="112" fill="#39F6D2" font-size="18" font-weight="900">magicState</text>
+    <text x="242" y="112" fill="#E9E4FF" font-size="13">interactive product experiment</text>
+    <text x="548" y="112" fill="#A89BCF" font-size="12">APP / DEMO</text>
+    <rect x="34" y="145" width="692" height="48" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="54" y="175" fill="#FF4FD8" font-size="17" font-weight="900">02</text>
+    <text x="96" y="175" fill="#39F6D2" font-size="18" font-weight="900">downing_detect</text>
+    <text x="280" y="175" fill="#E9E4FF" font-size="13">YOLO video risk detection</text>
+    <text x="548" y="175" fill="#A89BCF" font-size="12">VISION / AI</text>
+    <rect x="34" y="208" width="692" height="48" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="54" y="238" fill="#FF4FD8" font-size="17" font-weight="900">03</text>
+    <text x="96" y="238" fill="#39F6D2" font-size="18" font-weight="900">Algorithm</text>
+    <text x="228" y="238" fill="#E9E4FF" font-size="13">C++ problem-solving training log</text>
+    <text x="548" y="238" fill="#A89BCF" font-size="12">C++ / LOG</text>
+  </g>
+</svg>

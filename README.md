@@ -22,23 +22,15 @@
 
 <div align="center">
   <img src="assets/brand/current-quest.svg" width="760" alt="Current quests rotate through SwiftUI, computer vision, algorithms, and building experiments" />
+  <br />
+  <img src="assets/brand/quest-log.svg" width="760" alt="Quest log for Izumi's current app, algorithm, computer vision, and macOS work" />
 </div>
-
-```txt
-> Building small, useful apps from raw ideas.
-> Practicing algorithms as a long-term training loop.
-> Exploring computer vision and AI product workflows.
-> Learning macOS development by shipping real interfaces.
-```
 
 ## `02 // LOADOUT`
 
-| Area | Current Stack | What I Use It For |
-| --- | --- | --- |
-| `AI / Vision` | Python, YOLO, OpenCV | Detection experiments and model-driven prototypes |
-| `Algorithms` | C++, data structures, problem patterns | Competitive-programming practice and implementation notes |
-| `macOS Apps` | Swift, SwiftUI/AppKit | Desktop tools with clean workflows |
-| `Product Building` | Git, GitHub Actions, README automation | Turning experiments into maintainable projects |
+<div align="center">
+  <img src="assets/brand/loadout-panel.svg" width="760" alt="Neon pixel loadout panel listing Izumi's AI, algorithms, macOS, and product-building stack" />
+</div>
 
 ## `03 // PLAYER STATS`
 
@@ -49,6 +41,13 @@
 </div>
 
 ## <code>04 // FEATURED BUILDS</code>
+
+<div align="center">
+  <img src="assets/brand/featured-builds.svg" width="760" alt="Neon pixel featured build cards for magicState, downing_detect, and Algorithm" />
+</div>
+
+<details>
+<summary><code>PROJECT LINKS // FALLBACK</code></summary>
 
 ### [<code>magicState</code>](https://github.com/Izumi-iii/magicState)
 
@@ -67,6 +66,8 @@ A Python computer-vision project using YOLO to detect potential drowning risk in
 A growing C++ log of algorithm practice, problem-solving patterns, and implementation notes.
 
 `C++` · `problem solving` · `training log`
+
+</details>
 
 <div align="center">
   <img src="assets/generated/projects.svg" width="680" alt="Live stars and update dates for Izumi's featured repositories" />

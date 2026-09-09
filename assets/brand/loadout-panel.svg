@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="250" viewBox="0 0 760 250" role="img" aria-label="Neon pixel loadout panel listing Izumi's AI, algorithms, macOS, and product-building stack">
+  <rect x="3" y="3" width="748" height="238" rx="6" fill="#0D0A20" stroke="#4FFFE1" stroke-width="3"/>
+  <rect x="17" y="17" width="720" height="204" rx="4" fill="#151033" opacity="0.72"/>
+  <path d="M25 29h54M25 37h28M655 214h64M687 205h32" stroke="#FF4FD8" stroke-width="4"/>
+  <text x="34" y="61" fill="#39F6D2" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="800">LOADOUT</text>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+    <rect x="34" y="82" width="322" height="50" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="52" y="113" fill="#FF4FD8" font-size="18" font-weight="800">AI</text>
+    <text x="96" y="103" fill="#E9E4FF" font-size="14" font-weight="700">Python / YOLO / OpenCV</text>
+    <text x="96" y="121" fill="#A89BCF" font-size="12">Detection experiments and prototypes</text>
+    <rect x="404" y="82" width="322" height="50" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="422" y="113" fill="#39F6D2" font-size="18" font-weight="800">C++</text>
+    <text x="472" y="103" fill="#E9E4FF" font-size="14" font-weight="700">Data structures / patterns</text>
+    <text x="472" y="121" fill="#A89BCF" font-size="12">Algorithm practice and notes</text>
+    <rect x="34" y="150" width="322" height="50" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="52" y="181" fill="#39F6D2" font-size="18" font-weight="800">MAC</text>
+    <text x="108" y="171" fill="#E9E4FF" font-size="14" font-weight="700">Swift / SwiftUI / AppKit</text>
+    <text x="108" y="189" fill="#A89BCF" font-size="12">Desktop tools with clean workflows</text>
+    <rect x="404" y="150" width="322" height="50" rx="4" fill="#26204D" opacity="0.82"/>
+    <text x="422" y="181" fill="#FF4FD8" font-size="18" font-weight="800">GIT</text>
+    <text x="472" y="171" fill="#E9E4FF" font-size="14" font-weight="700">Actions / README automation</text>
+    <text x="472" y="189" fill="#A89BCF" font-size="12">Maintainable project shipping</text>
+  </g>
+</svg>

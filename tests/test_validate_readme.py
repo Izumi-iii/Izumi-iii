@@ -86,6 +86,9 @@ def test_real_readme_has_exact_local_visual_manifest_and_footer_contacts():
     expected_paths = {
         "assets/brand/izumi-builder.svg",
         "assets/brand/current-quest.svg",
+        "assets/brand/quest-log.svg",
+        "assets/brand/loadout-panel.svg",
+        "assets/brand/featured-builds.svg",
         "assets/hero/miku-idle.gif",
         "assets/generated/profile-stats.svg",
         "assets/generated/languages.svg",

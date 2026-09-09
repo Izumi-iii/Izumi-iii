@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="150" viewBox="0 0 760 150" role="img" aria-label="Quest log for Izumi's current app, algorithm, computer vision, and macOS work">
+  <rect x="3" y="3" width="748" height="138" rx="6" fill="#0D0A20" stroke="#FF4FD8" stroke-width="3"/>
+  <rect x="16" y="16" width="724" height="112" rx="4" fill="#151033" opacity="0.72"/>
+  <path d="M24 28h54M24 36h28M657 119h64M689 110h32" stroke="#39F6D2" stroke-width="4"/>
+  <text x="34" y="60" fill="#39F6D2" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="800">QUEST LOG</text>
+  <g fill="#E9E4FF" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">
+    <text x="34" y="88">&gt; Building small, useful apps from raw ideas.</text>
+    <text x="34" y="110">&gt; Practicing algorithms as a long-term training loop.</text>
+    <text x="390" y="88">&gt; Exploring computer vision and AI workflows.</text>
+    <text x="390" y="110">&gt; Learning macOS by shipping real interfaces.</text>
+  </g>
+</svg>
